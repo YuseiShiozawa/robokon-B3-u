@@ -1,0 +1,108 @@
+import cv2
+import sys
+import math
+
+# カメラの設定 デバイスIDは0
+cap = cv2.VideoCapture(0)
+
+# フレームレートの設定
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# フレームレートの確認
+fps_setting = cap.get(cv2.CAP_PROP_FPS)
+print("FPS(Setting):", '{:11.02f}'.format(fps_setting))
+
+# OpenCVのタイマーの準備
+timer = cv2.TickMeter()
+timer.start()
+
+# 各変数の初期値設定
+count = 0
+max_count = 30
+fps = 0
+
+# ウィンドウの名前設定
+cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
+
+# ウィンドウフレームのサイズ調整
+cv2.resizeWindow('video image', 85, 60)  # ここで適切なサイズを設定してください
+
+# ライントレースの制御パラメータ
+threshold_value = 100  # 二値化の閾値
+#turn_threshold = 0.5   # 方向転換の閾値
+#max_turn_angle = 30    # 最大旋回角度
+
+# 繰り返しのためのwhile文
+while True:
+    # カメラからの画像取得
+    ret, img = cap.read()
+    # Max_Countの回数になったら、その枚数を取得するのにかかった時間を求めてFPSを
+算出
+    #if count == max_count:
+     #   timer.stop()
+      #  fps = max_count / timer.getTimeSec()
+       # print("FPS(Actual):", '{:11.02f}'.format(fps))
+        # リセットと再スタート
+       ## timer.reset()
+       # count = 0
+        #timer.start()
+
+    # カメラの画像の出力(なくてもOK）
+    #cv2.imshow('video image', img)
+    # 取得枚数をカウント
+    count += 1
+
+    # 画像処理：グレースケール変換と二値化
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
+
+    # 画像の高さと幅
+    height,width = binary.shape
+
+    # ラインの中央を見つける
+    middle_x = int(width / 2)
+    line = binary[-1, :]
+    left_edge = 0
+    right_edge = width - 1
+    for i in range(middle_x, 0, -1):
+        if line[i] == 0:
+            left_edge = i
+            break
+    for i in range(middle_x, width):
+        if line[i] == 0:
+            right_edge = i
+            break
+
+    # ラインの位置に応じて制御
+    line_position = (left_edge + right_edge) / 2
+
+    # 映像の中心から座標系を描画
+#    cv2.line(img, (middle_x, 0), (middle_x, height), (255, 255, 255), 1)
+#    cv2.line(img, (0, int(height / 2)), (width, int(height / 2)), (255, 255, 255), 1)
+
+    # 赤点を描画
+    cv2.circle(img, (middle_x, int(height / 4)), 5, (0, 0, 255), -1)
+    #cv2.circle(img, (middle_x, 200), 5, (0, 0, 255), -1)
+
+    cv2.circle(img, (middle_x, int(height * 3 / 4)), 5, (0, 0, 255), -1)
+   # cv2.circle(img, (middle_x, 40), 5, (0, 0, 255), -1)
+
+    # 赤点とline_positionの距離を計算
+    distance_top = abs(int(height / 4) - line_position)
+    distance_bottom = abs(int(height * 3 / 4) - line_position)
+   # distance_top = abs(200 - line_position)
+   # distance_bottom = abs(40 - line_position)
+
+    print("Distance from top red point to line_position:", distance_top)
+    print("Distance from bottom red point to line_posin:", distance_bottom)
+
+    # 繰り返し分から抜けるためのif文
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+# メモリを解放して終了するためのコマンド
+cap.release()
+cv2.destroyAllWindows()
+
+

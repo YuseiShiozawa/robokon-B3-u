@@ -1,0 +1,117 @@
+mport cv2
+import sys
+import time
+
+# カメラの設定 デバイスIDは0
+cap = cv2.VideoCapture(1)
+
+# フレームレートの設定
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# フレームレートの確認
+#fps_setting = cap.get(cv2.CAP_PROP_FPS)
+#print("FPS(Setting):", '{:11.02f}'.format(fps_setting))
+
+# OpenCVのタイマーの準備
+timer = cv2.TickMeter()
+timer.start()
+
+# 各変数の初期値設定
+count = 0
+threshold_value = 100  # 二値化の閾値
+turn_threshold = 0.5   # 方向転換の閾値
+max_turn_angle = 30    # 最大旋回角度
+max_count = 30
+#fps = 0
+
+# ウィンドウの名前設定
+cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
+
+# ウィンドウフレームのサイズ調整
+cv2.resizeWindow('video image', 85, 60)  # ここで適切なサイズを設定してください
+
+# 赤点のY座標の設定
+red_point_y1 = 200  # Y座標1
+red_point_y2 = 400  # Y座標2
+
+# 繰り返しのためのwhile文
+while True:
+    # カメラからの画像取得
+    ret, img = cap.read()
+    # Max_Countの回数になったら、その枚数を取得するのにかかった時間を求めてFPSを
+算出
+ #   if count == max_count:
+  #      timer.stop()
+   #     fps = max_count / timer.getTimeSec()
+    #    print("FPS(Actual):", '{:11.02f}'.format(fps))
+        # リセットと再スタート
+     #   timer.reset()
+      #  count = 0
+       # timer.start()
+
+ # 映像の中心を求める
+    center_x = img.shape[1] // 2
+    center_y = img.shape[0] // 2
+
+    # 中心を基準に座標系を描画する
+    cv2.line(img, (center_x, 0), (center_x, img.shape[0]), (255, 255, 255), 1)
+    cv2.line(img, (0, center_y), (img.shape[1], center_y), (255, 255, 255), 1)
+
+    # 赤点の描画
+    cv2.circle(img, (center_x, red_point_y1), 5, (0, 0, 255), -1)
+    cv2.circle(img, (center_x, red_point_y2), 5, (0, 0, 255), -1)
+
+    # 映像の出力
+    cv2.imshow('video image', img)
+
+    # 画像処理：グレースケール変換と二値化
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
+
+    # 画像の高さと幅
+    height, width = binary.shape
+
+    # ラインの中央を見つける
+    middle_x = int(width / 2)
+    line = binary[-1, :]
+    left_edge = 0
+    right_edge = width - 1
+    for i in range(middle_x, 0, -1):
+        if line[i] == 0:
+            right_edge = i
+            break
+    for i in range(middle_x, width):
+        if line[i] == 0:
+            left_edge = i
+            break
+
+    # ラインの位置に応じて制御
+    line_position = (left_edge + right_edge) / 2
+    if line_position < middle_x - width * turn_threshold:
+        # ラインが左にある場合、右に旋回
+        print("Turn right")
+        # ここで右旋回の制御を実行
+    elif line_position > middle_x + width * turn_threshold:
+        # ラインが右にある場合、左に旋回
+        print("Turn left")
+        # ここで左旋回の制御を実行
+    else:
+        # ラインが中央にある場合、直進
+        print(line_position)
+        # ここで直進の制御を実行
+
+
+
+    # 取得枚数をカウント
+    count += 1
+
+    # 繰り返し分から抜けるためのif文
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+# メモリを解放して終了するためのコマンド
+cap.release()
+cv2.destroyAllWindows()
+
+         
