@@ -20,6 +20,8 @@ timer.start()
 count = 0
 max_count = 30
 fps = 0
+red_point_x1 = 180
+red_point_x2 = 180
 red_point_y1 = 200  # Y座標1 ue
 red_point_y2 = 400  # Y座標2 sita
 # ウィンドウの名前設定
@@ -44,8 +46,9 @@ while True:
     cv2.line(img, (center_x, 0), (center_x, img.shape[0]), (255, 255, 255), 1)
     cv2.line(img, (0, center_y), (img.shape[1], center_y), (255, 255, 255), 1)
     #red point draw
-    cv2.circle(img, (center_x, red_point_y1), 5, (0, 0, 255), -1)
-    cv2.circle(img, (center_x, red_point_y2), 5, (0, 0, 255), -1)
+    cv2.circle(img, (center_x + red_point_x1 - 40, red_point_y1), 5, (0, 0, 255), -1) #migi
+    cv2.circle(img, (red_point_x1, red_point_y1), 5, (0, 0, 255), -1) #hidari
+    cv2.circle(img, (center_x, red_point_y2), 5, (0, 0, 255), -1)  #sita)
     # カメラの画像の出力(なくてもOK）
     cv2.imshow('video image', img)
     # 取得枚数をカウント
@@ -86,6 +89,8 @@ while True:
     distance_bottom = abs(red_point_y2 - line_position)
   # distance_top = abs(center_y - line_position)
    # distance_bottom = abs(center_x - line_position)
+    distance_top = math.sqrt((center_x - line_position) ** 2 + (red_point_y1 - line_position) ** 2)
+    distance_bottom = math.sqrt((center_x - line_position) ** 2 + (red_point_y2 - line_position) ** 2)
  
 
    # distance_top = abs(200 - line_position)
