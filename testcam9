@@ -3,14 +3,14 @@ import sys
 import math
 
 # カメラの設定 デバイスIDは0
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(4)
 
 # フレームレートの設定
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 # フレームレートの確認
-fps_setting = cap.get(cv2.CAP_PROP_FPS)
-print("FPS(Setting):", '{:11.02f}'.format(fps_setting))
+#fps_setting = cap.get(cv2.CAP_PROP_FPS)
+#print("FPS(Setting):", '{:11.02f}'.format(fps_setting))
 
 # OpenCVのタイマーの準備
 timer = cv2.TickMeter()
@@ -20,7 +20,8 @@ timer.start()
 count = 0
 max_count = 30
 fps = 0
-
+red_point_y1 = 200  # Y座標1 ue
+red_point_y2 = 400  # Y座標2 sita
 # ウィンドウの名前設定
 cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
 
@@ -37,6 +38,14 @@ while True:
     # カメラからの画像取得
     ret, img = cap.read()
 
+    #seek movie center and draw zahyou
+    center_x = img.shape[1] // 2
+    center_y = img.shape[0] // 2
+    cv2.line(img, (center_x, 0), (center_x, img.shape[0]), (255, 255, 255), 1)
+    cv2.line(img, (0, center_y), (img.shape[1], center_y), (255, 255, 255), 1)
+    #red point draw
+    cv2.circle(img, (center_x, red_point_y1), 5, (0, 0, 255), -1)
+    cv2.circle(img, (center_x, red_point_y2), 5, (0, 0, 255), -1)
     # カメラの画像の出力(なくてもOK）
     cv2.imshow('video image', img)
     # 取得枚数をカウント
@@ -66,20 +75,19 @@ while True:
     # ラインの位置に応じて制御
     line_position = (left_edge + right_edge) / 2
 
-    # 映像の中心から座標系を描画
-#    cv2.line(img, (middle_x, 0), (middle_x, height), (255, 255, 255), 1)
-#    cv2.line(img, (0, int(height / 2)), (width, int(height / 2)), (255, 255, 255), 1)
-
-    # 赤点を描画
-    cv2.circle(img, (middle_x, int(height / 4)), 5, (0, 0, 255), -1)
-    #cv2.circle(img, (middle_x, 200), 5, (0, 0, 255), -1)
-
-    cv2.circle(img, (middle_x, int(height * 3 / 4)), 5, (0, 0, 255), -1)
-   # cv2.circle(img, (middle_x, 40), 5, (0, 0, 255), -1)
+    cv2.line(img, (center_x, 0), (center_x, img.shape[0]), (255, 255, 255), 1)
+    cv2.line(img, (0, center_y), (img.shape[1], center_y), (255, 255, 255), 1)
 
     # 赤点とline_positionの距離を計算
-    distance_top = abs(int(height / 4) - line_position)
-    distance_bottom = abs(int(height * 3 / 4) - line_position)
+   #distance_top = abs(int(height / 4) - line_position)
+   #distance_bottom = abs(int(height * 3 / 4) - line_position)
+   #
+    distance_top = abs(red_point_y1 - line_position)
+    distance_bottom = abs(red_point_y2 - line_position)
+  # distance_top = abs(center_y - line_position)
+   # distance_bottom = abs(center_x - line_position)
+ 
+
    # distance_top = abs(200 - line_position)
    # distance_bottom = abs(40 - line_position)
 
