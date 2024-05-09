@@ -1,0 +1,62 @@
+import cv2
+import numpy as np
+import math
+
+# カメラの設定 デバイスIDは0
+cap = cv2.VideoCapture(4)
+
+# フレームレートの設定
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# 各変数の初期値設定
+count = 0
+max_count = 30
+red_point_interval = 20  # 白い点の間隔（ピクセル）
+red_point_radius = 5  # 白い点の半径（ピクセル）
+red_line_width = 40  # 黒線の幅（ピクセル）
+
+# ウィンドウの名前設定
+cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
+
+# ウィンドウフレームのサイズ調整
+cv2.resizeWindow('video image', 85, 60)
+
+while True:
+    # カメラからの画像取得
+    ret, img = cap.read()
+
+    # 画像処理：グレースケール変換
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 黒線の検出
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # 黒線の輪郭を見つける
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
+        # 黒線の輪郭を描画
+        cv2.drawContours(img, [contour], -1, (0, 0, 255), 2)
+
+        # 黒線の中心を計算
+        M = cv2.moments(contour)
+        if M["m00"] != 0:
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+
+            # 黒線の中心に等間隔で白い点を描画（縦に等間隔）
+            for i in range(-red_line_width // 2, red_line_width // 2, red_point_interval):
+                cv2.circle(img, (cx, cy + i), red_point_radius, (255, 255, 255), -1)
+
+    # カメラの画像の出力
+    cv2.imshow('video image', img)
+
+    # 繰り返し分から抜けるためのif文
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+# メモリを解放して終了するためのコマンド
+cap.release()
+cv2.destroyAllWindows()
+
