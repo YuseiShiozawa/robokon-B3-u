@@ -89,15 +89,17 @@ while True:
     distance_bottom = abs(red_point_y2 - line_position)
   # distance_top = abs(center_y - line_position)
    # distance_bottom = abs(center_x - line_position)
-    distance_top = math.sqrt((center_x - line_position) ** 2 + (red_point_y1 - line_position) ** 2)
-    distance_bottom = math.sqrt((center_x - line_position) ** 2 + (red_point_y2 - line_position) ** 2)
+    distance_right = math.sqrt((center_x + red_point_x1 - 40 - line_position) ** 2 + (red_point_y1 - line_position) ** 2)
+    distance_left = math.sqrt((red_point_x1 - line_position) ** 2 + (red_point_y1 - line_position) ** 2)
+    distance_sita = math.sqrt((center_x - line_position) ** 2 + (red_point_y2 - line_position) ** 2)
  
 
    # distance_top = abs(200 - line_position)
    # distance_bottom = abs(40 - line_position)
 
-    print("Distance from top red point to line_position:", distance_top)
-    print("Distance from bottom red point to line_posin:", distance_bottom)
+    print("Distance from top red point to line_position:", distance_right)
+    print("Distance from bottom red point to line_posin:", distance_left)
+    print("Distance from bottom red point to line_posin:", distance_sita)
 
     # 繰り返し分から抜けるためのif文
     key = cv2.waitKey(1)

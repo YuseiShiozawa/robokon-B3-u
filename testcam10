@@ -1,0 +1,75 @@
+import cv2
+import numpy as np
+import math
+
+# カメラの設定 デバイスIDは0
+cap = cv2.VideoCapture(4)
+
+# フレームレートの設定
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# 各変数の初期値設定
+red_point_radius = 5
+
+# ウィンドウの名前設定
+cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
+
+# ウィンドウフレームのサイズ調整
+cv2.resizeWindow('video image', 640, 480)
+
+while True:
+    # カメラからの画像取得
+    ret, img = cap.read()
+
+    # 画像サイズを取得
+    height, width, _ = img.shape
+
+    # 赤点の中心座標を画像の中央に設定
+    red_point_x = width // 2
+    red_point_y = height // 2
+
+    # グレースケール変換
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 黒線のみを検出するために閾値処理
+    _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+
+    # 黒線を膨張処理して太くする
+    kernel = np.ones((5,5),np.uint8)
+    dilation = cv2.dilate(binary, kernel, iterations = 1)
+
+    # 膨張処理後の画像から輪郭を抽出
+    contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # 黒線が見つかった場合の処理
+    if contours:
+        # 黒線の最大領域を見つける
+        max_contour = max(contours, key=cv2.contourArea)
+
+        # 黒線の中心を計算
+        moments = cv2.moments(max_contour)
+        if moments["m00"] != 0:
+            cx = int(moments["m10"] / moments["m00"])
+            cy = int(moments["m01"] / moments["m00"])
+
+            # 赤点から黒線までの距離を計算
+            distance = math.sqrt((cx - red_point_x) ** 2 + (cy - red_point_y) ** 2)
+
+            # 画像に距離を表示
+            cv2.putText(img, f"Distance: {distance}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+    # 赤点を描画
+    cv2.circle(img, (red_point_x, red_point_y), red_point_radius, (0, 0, 255), -1)
+
+    # 画像の出力
+    cv2.imshow('video image', img)
+
+    # キー入力を待機し、ESCキーが押されたら終了
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+# メモリを解放して終了
+cap.release()
+cv2.destroyAllWindows()
+
