@@ -10,8 +10,8 @@ cap.set(cv2.CAP_PROP_FPS, 30)
 
 # 各変数の初期値設定
 count = 0
-max_count = 30
-red_point_interval = 35  # 白い点の間隔（ピクセル）を50に変更
+#max_count = 30
+#red_point_interval = 35  # 白い点の間隔（ピクセル）を50に変更
 red_point_radius = 5  # 白い点の半径（ピクセル）
 red_line_width = 40  # 黒線の幅（ピクセル）
 blue_point_x1 = 100 # 左の青点
@@ -46,7 +46,7 @@ while True:
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contours:
-        area = cv2.contourArea(contour)
+        area = cv2.contourArea(contour) # 輪郭の内側の面積をareaに設定
 
         if area > 100:
 
@@ -69,9 +69,10 @@ while True:
                 # 赤点と白点の距離を計算
                 distance = (cx - red_point_x) * -1
 
-                # 赤点と白点の距離を描画
+                # 赤点と白点の距離を描画と出力
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(img, f"Distance: {distance}", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                print(distance)
 
                 # 青い点の座標と黒線の座標が重なる場合、点の色を緑に変更
                 if blue_point_y1 >= 0 and blue_point_y1 < img.shape[0] and blue_point_x1 >= 0 and blue_point_x1 < img.shape[1]:
@@ -87,7 +88,7 @@ while True:
     # 赤点の描画
     cv2.circle(img, (red_point_x, cy), red_point_radius, (0, 0, 255), -1)
 
-    # カメラの画像の出力
+    # カメラの画像の出力(重いから最悪いらない
     cv2.imshow('video image', img)
 
     # 繰り返し分から抜けるためのif文

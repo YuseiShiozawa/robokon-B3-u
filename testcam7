@@ -3,7 +3,7 @@ import sys
 import time
 
 # カメラの設定 デバイスIDは0
-cap = cv2.VideoCapture(4)
+cap = cv2.VideoCapture(0)
 
 # フレームレートの設定
 cap.set(cv2.CAP_PROP_FPS, 30)
