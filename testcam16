@@ -3,7 +3,7 @@ import numpy as np
 import math
 
 # カメラの設定 デバイスIDは0
-cap = cv2.VideoCapture(4)
+cap = cv2.VideoCapture(0)
 
 # フレームレートの設定
 cap.set(cv2.CAP_PROP_FPS, 30)
@@ -14,8 +14,8 @@ max_count = 30
 red_point_interval = 35  # 白い点の間隔（ピクセル）を50に変更
 red_point_radius = 5  # 白い点の半径（ピクセル）
 red_line_width = 40  # 黒線の幅（ピクセル）
-blue_point_x = 200
-blue_point_y = 200
+blue_point_x = 100
+blue_point_y = 60
 
 # ウィンドウの名前設定
 cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
@@ -54,7 +54,7 @@ while True:
             if M["m00"] != 0:
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
-
+             # 白点を描画
                 cv2.circle(img, (cx, cy), red_point_radius, (255, 255, 255), -1)
 
                 # 青い点を描画tensettei
@@ -65,7 +65,7 @@ while True:
 
                 # 赤点と白点の距離を描画
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(img, f"Distance: {distance}", (10, 50), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                cv2.putText(img, f"Distance: {distance}", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
                 # 青い点の座標と黒線の座標が重なる場合、点の色を緑に変更
                 if blue_point_y >= 0 and blue_point_y < img.shape[0] and blue_point_x >= 0 and blue_point_x < img.shape[1]:
