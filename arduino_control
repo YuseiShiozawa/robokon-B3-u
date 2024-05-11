@@ -1,0 +1,27 @@
+#include <ros.h>
+#include <std_msgs/Int32.h>
+
+ros::NodeHandle nh;
+
+void distanceCallback(const std_msgs::Int32& msg) {
+    int distance = msg.data;
+    char buf[20];
+    // Arduino での処理
+    sprintf(buf, "test:%d", distance);
+    nh.loginfo(buf);
+    //Serial.print("Distance: ");
+    //Serial.println(distance);
+}
+
+ros::Subscriber<std_msgs::Int32> sub("distance", &distanceCallback);
+
+void setup() {
+    nh.getHardware()->setBaud(9600);
+    nh.initNode();
+    nh.subscribe(sub);
+}
+
+void loop() {
+    nh.spinOnce();
+    // その他の Arduino の処理
+}
