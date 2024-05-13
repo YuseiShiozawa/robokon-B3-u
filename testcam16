@@ -3,7 +3,9 @@ import numpy as np
 import math
 
 # カメラの設定 デバイスIDは0
-cap = cv2.VideoCapture(4)
+#cap = cv2.VideoCapture(4)
+cap = cv2.VideoCapture(0)
+
 
 # フレームレートの設定
 cap.set(cv2.CAP_PROP_FPS, 30)
@@ -82,7 +84,7 @@ while True:
                         cv2.circle(img, (blue_point_x1, blue_point_y1), red_point_radius, (255, 0, 0), -1)
 
                 if blue_point_y2 >= 0 and blue_point_y2 < img.shape[0] and blue_point_x2 >= 0 and blue_point_x2 < img.shape[1]:
-                    if binary[blue_point_y1, blue_point_x1] == 0:
+                    if binary[blue_point_y2, blue_point_x2] == 0:
                         cv2.circle(img, (blue_point_x2, blue_point_y2), red_point_radius, (255, 0, 0), -1)
                 count+=1
 
