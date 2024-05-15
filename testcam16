@@ -3,8 +3,8 @@ import numpy as np
 import math
 
 # カメラの設定 デバイスIDは0
-#cap = cv2.VideoCapture(4)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(4)
+#cap = cv2.VideoCapture(0)
 
 
 # フレームレートの設定
@@ -49,7 +49,7 @@ while True:
     for contour in contours:
         area = cv2.contourArea(contour) # 輪郭の内側の面積をareaに設定
 
-        if area > 100:
+        if area > 1000: ##本来は100
 
             # 黒線の輪郭を描画
             cv2.drawContours(img, [contour], -1, (0, 0, 255), 2)
@@ -73,7 +73,7 @@ while True:
                 # 赤点と白点の距離を描画と出力
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(img, f"Distance {distance}:", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-                if count == 40: # 一定間隔で出力
+                if count == 10: # 一定間隔で出力
                         print(distance)
                       #  cv2.putText(img, f"Distance: {distance}", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
                         count = 0
