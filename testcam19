@@ -1,0 +1,107 @@
+import cv2
+import numpy as np
+
+# パーティクルフィルタのパラメータ
+NUM_PARTICLES = 1000
+NOISE_STD = 20
+
+# 初期化
+def initialize_particles(num_particles, img_shape):
+    particles = np.empty((num_particles, 2))
+    particles[:, 0] = np.random.uniform(0, img_shape[1], size=num_particles)
+    particles[:, 1] = np.random.uniform(0, img_shape[0], size=num_particles)
+    return particles
+
+# パーティクルの重みを更新
+def update_weights(particles, frame, line_color=(0, 0, 0), threshold=50):
+    weights = np.zeros(len(particles))
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, binary_frame = cv2.threshold(gray_frame, 128, 255, cv2.THRESH_BINARY_INV)
+    
+    for i, particle in enumerate(particles):
+        x, y = int(particle[0]), int(particle[1])
+        if 0 <= x < frame.shape[1] and 0 <= y < frame.shape[0]:
+            color = frame[y, x]
+            distance = np.linalg.norm(color - line_color)
+            if binary_frame[y, x] == 255:
+                weights[i] = 1
+            else:
+                weights[i] = np.exp(-distance / threshold)
+    
+    weights += 1e-300  # avoid zeros
+    weights /= np.sum(weights)
+    return weights
+
+# リサンプリング
+def resample(particles, weights):
+    indices = np.random.choice(range(len(particles)), size=len(particles), p=weights)
+    particles = particles[indices]
+    return particles
+
+# パーティクルの移動
+def move_particles(particles, move_std):
+    noise = np.random.normal(0, move_std, particles.shape)
+    particles += noise
+    return particles
+
+# T字形状を検出する関数
+def detect_t_shape(frame):
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, binary_frame = cv2.threshold(gray_frame, 128, 255, cv2.THRESH_BINARY_INV)
+    contours, _ = cv2.findContours(binary_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    for contour in contours:
+        approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
+        if len(approx) >= 7:  # T字は多角形として検出される
+            return approx
+    
+    return None
+
+# カメラからの映像取得と処理
+def main():
+    cap = cv2.VideoCapture(4)  # カメラデバイスのIDを指定
+    if not cap.isOpened():
+        print("カメラが見つかりません")
+        return
+
+    ret, frame = cap.read()
+    if not ret:
+        print("フレームが取得できません")
+        return
+    
+    particles = initialize_particles(NUM_PARTICLES, frame.shape)
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        t_shape = detect_t_shape(frame)
+        weights = update_weights(particles, frame)
+        particles = resample(particles, weights)
+        particles = move_particles(particles, NOISE_STD)
+
+        # パーティクルを描画
+        for particle in particles:
+            cv2.circle(frame, (int(particle[0]), int(particle[1])), 1, (0, 255, 0), -1)
+
+        # T字形状を描画
+        if t_shape is not None:
+            cv2.drawContours(frame, [t_shape], -1, (255, 0, 0), 2)
+            print("T字路発見！！！！")
+
+        # 重心を計算して描画
+        mean_particle = np.mean(particles, axis=0).astype(int)
+        cv2.circle(frame, (mean_particle[0], mean_particle[1]), 5, (0, 0, 255), -1)
+
+        cv2.imshow('Particle Filter', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+

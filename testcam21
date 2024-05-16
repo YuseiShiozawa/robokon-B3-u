@@ -1,0 +1,122 @@
+import cv2
+import numpy as np
+
+# カメラの解像度
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+
+# パーティクルフィルタのパラメータ
+NUM_PARTICLES = 1000
+NOISE_STD = 5
+
+# T字路の検出に関するパラメータ
+THRESHOLD_LINE_LENGTH = 50
+THRESHOLD_LINE_ANGLE = 30
+THRESHOLD_T_INTERSECTION = 3
+
+# 初期化
+def initialize_particles(num_particles, img_shape):
+    particles = np.empty((num_particles, 2))
+    particles[:, 0] = np.random.uniform(0, img_shape[1], size=num_particles)
+    particles[:, 1] = np.random.uniform(0, img_shape[0], size=num_particles)
+    return particles
+
+# パーティクルの重みを更新
+def update_weights(particles, frame, line_color=(0, 0, 0), threshold=50):
+    weights = np.zeros(len(particles))
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, binary_frame = cv2.threshold(gray_frame, 128, 255, cv2.THRESH_BINARY_INV)
+    
+    for i, particle in enumerate(particles):
+        x, y = int(particle[0]), int(particle[1])
+        if 0 <= x < frame.shape[1] and 0 <= y < frame.shape[0]:
+            color = frame[y, x]
+            distance = np.linalg.norm(color - line_color)
+            if binary_frame[y, x] == 255:
+                weights[i] = 1
+            else:
+                weights[i] = np.exp(-distance / threshold)
+    
+    weights += 1e-300  # avoid zeros
+    weights /= np.sum(weights)
+    return weights
+
+# リサンプリング
+def resample(particles, weights):
+    indices = np.random.choice(range(len(particles)), size=len(particles), p=weights)
+    particles = particles[indices]
+    return particles
+
+# パーティクルの移動
+def move_particles(particles, move_std):
+    noise = np.random.normal(0, move_std, particles.shape)
+    particles += noise
+    return particles
+
+# T字路の検出
+def detect_t_intersection(lines):
+    # 直線の交点の数をカウント
+    intersection_count = 0
+    for i in range(len(lines)):
+        for j in range(i + 1, len(lines)):
+            intersection = intersection_point(lines[i], lines[j])
+            if intersection is not None:
+                intersection_count += 1
+    
+    return intersection_count >= THRESHOLD_T_INTERSECTION
+
+# 直線の交点を計算
+def intersection_point(line1, line2):
+    rho1, theta1 = line1
+    rho2, theta2 = line2
+    A = np.array([
+        [np.cos(theta1), np.sin(theta1)],
+        [np.cos(theta2), np.sin(theta2)]
+    ])
+    b = np.array([[rho1], [rho2]])
+    try:
+        x, y = np.linalg.solve(A, b)
+        x = int(x)
+        y = int(y)
+        return x, y
+    except:
+        return None
+
+# カメラからの映像取得と処理
+def main():
+    cap = cv2.VideoCapture(0)  # カメラデバイスのIDを指定
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+    
+    if not cap.isOpened():
+        print("カメラが見つかりません")
+        return
+
+    ret, frame = cap.read()
+    if not ret:
+        print("フレームが取得できません")
+        return
+    
+    particles = initialize_particles(NUM_PARTICLES, frame.shape)
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # グレースケールに変換
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
+        # エッジ検出
+        edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+        
+        # ライン検出
+        lines = cv2.HoughLines(edges, 1, np.pi / 180, 150)
+        
+        # 検出されたラインを描画
+        if lines is not None:
+            for line in lines:
+                rho, theta = line[0]
+                a = np.cos(theta)
+                b = np.sin(theta
+

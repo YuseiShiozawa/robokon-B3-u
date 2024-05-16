@@ -1,0 +1,103 @@
+import cv2
+import numpy as np
+
+# パーティクルフィルタのパラメータ
+NUM_PARTICLES = 2000
+NOISE_STD = 40
+
+# 初期化
+def initialize_particles(num_particles, img_shape):
+    particles = np.empty((num_particles, 2))
+    particles[:, 0] = np.random.uniform(0, img_shape[1], size=num_particles)
+    particles[:, 1] = np.random.uniform(0, img_shape[0], size=num_particles)
+    return particles
+
+# パーティクルの重みを更新
+def update_weights(particles, frame, line_color=(0, 0, 0), threshold=50):
+    weights = np.zeros(len(particles))
+    for i, particle in enumerate(particles):
+        x, y = int(particle[0]), int(particle[1])
+        if 0 <= x < frame.shape[1] and 0 <= y < frame.shape[0]:
+            color = frame[y, x]
+            distance = np.linalg.norm(color - line_color)
+            weights[i] = np.exp(-distance / threshold)
+    weights += 1e-300  # avoid zeros
+    weights /= np.sum(weights)
+    return weights
+
+# リサンプリング
+def resample(particles, weights):
+    indices = np.random.choice(range(len(particles)), size=len(particles), p=weights)
+    particles = particles[indices]
+    return particles
+
+# パーティクルの移動
+def move_particles(particles, move_std):
+    noise = np.random.normal(0, move_std, particles.shape)
+    particles += noise
+    return particles
+
+# T字型のラインを検出する関数
+def detect_t_line(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    t_line_contours = []
+    for contour in contours:
+        approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+        if len(approx) == 3:
+            t_line_contours.append(contour)
+    
+    return t_line_contours
+
+# カメラからの映像取得と処理
+def main():
+    cap = cv2.VideoCapture(4)  # カメラデバイスのIDを指定
+    if not cap.isOpened():
+        print("カメラが見つかりません")
+        return
+
+    ret, frame = cap.read()
+    if not ret:
+        print("フレームが取得できません")
+        return
+    
+    particles = initialize_particles(NUM_PARTICLES, frame.shape)
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        weights = update_weights(particles, frame)
+        particles = resample(particles, weights)
+        particles = move_particles(particles, NOISE_STD)
+
+        # パーティクルを描画
+        for particle in particles:
+            cv2.circle(frame, (int(particle[0]), int(particle[1])), 1, (0, 255, 0), -1)
+
+        # 重心を計算して描画
+        mean_particle = np.mean(particles, axis=0).astype(int)
+        cv2.circle(frame, (mean_particle[0], mean_particle[1]), 5, (0, 0, 255), -1)
+
+        t_lines = detect_t_line(frame)
+        for contour in t_lines:
+            cv2.drawContours(frame, [contour], -1, (255, 0, 0), 2)
+        
+   #     if t_lines:
+    #        publish_result("T-line detected")
+
+
+        cv2.imshow('Particle Filter', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+
