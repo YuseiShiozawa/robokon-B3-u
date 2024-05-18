@@ -1,0 +1,127 @@
+import cv2
+import numpy as np
+
+# カメラの設定 デバイスIDは0
+cap = cv2.VideoCapture(4)
+#cap = cv2.VideoCapture(0)
+
+# フレームレートの設定
+cap.set(cv2.CAP_PROP_FPS, 30)
+
+# 各変数の初期値設定
+count = 0
+red_point_radius = 5  # 点の半径（ピクセル）
+red_point_x = 320  # 赤い点のX座標
+blue_point_x1 = 100  # 左の青点
+blue_point_y1 = 60
+blue_point_x2 = 550  # 右の青点
+blue_point_y2 = 60
+cy = 0
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+# ウィンドウの名前設定
+cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
+
+# トラックバーのコールバック関数
+def nothing(x):
+    pass
+
+# トラックバーをウィンドウに作成
+cv2.createTrackbar('Threshold', 'video image', 0, 255, nothing)
+
+while True:
+    # カメラからの画像取得
+    ret, img = cap.read()
+
+    height, width, _ = img.shape
+
+    img = img[height//2:, :]
+    red_point_x = width // 2
+
+    # 画像処理：グレースケール変換
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # トラックバーの値を取得
+    threshold_value = cv2.getTrackbarPos('Threshold', 'video image')
+
+    # 二値化
+    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY_INV) # 入力画像、しきい値、しきい値以上担ったときの出力値、方法
+#    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+#    _, binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, 0)
+
+#    white_pixels = cv2.countNonZero(binary)
+ #   total_pixels = binary.shape[0] * binary.shape[1]
+#    white_ratio = white_pixels / total_pixels
+
+        # 目標とする白のピクセルの割合に達したらループを抜ける
+ #   if white_ratio >= target_white_ratio or threshold_value >= 255:
+  #      break
+
+        # しきい値を調整
+   # if threshold_value < 255 and threshold_value > 0:
+    #    threshold_value += threshold_adjustment_step
+
+
+    cv2.putText(img, f"sikiti {_}:", (10, 80), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+ 
+
+    # 黒線の輪郭を見つける
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
+        area = cv2.contourArea(contour)  # 輪郭の内側の面積をareaに設定
+
+        if area > 1000:  # 本来は100
+
+            # 黒線の輪郭を描画
+            cv2.drawContours(img, [contour], -1, (0, 0, 255), 2)
+
+            # 黒線の中心を計算
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                # 白点を描画
+                cv2.circle(img, (cx, cy), red_point_radius, (255, 255, 255), -1)
+
+                # 青い点を描画
+                cv2.circle(img, (blue_point_x1, blue_point_y1), red_point_radius, (0, 255, 0), -1)
+                cv2.circle(img, (blue_point_x2, blue_point_y2), red_point_radius, (0, 255, 0), -1)
+
+                # 赤点と白点の距離を計算
+                distance = (cx - red_point_x) * -1
+
+                # 赤点と白点の距離を描画と出力
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(img, f"Distance {distance}:", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                if count == 10:  # 一定間隔で出力
+                    print(distance)
+                    count = 0
+
+                # 青い点の座標と黒線の座標が重なる場合、点の色を緑に変更
+                if 0 <= blue_point_y1 < img.shape[0] and 0 <= blue_point_x1 < img.shape[1]:
+                    if binary[blue_point_y1, blue_point_x1] == 0:
+                        cv2.circle(img, (blue_point_x1, blue_point_y1), red_point_radius, (255, 0, 0), -1)
+
+                if 0 <= blue_point_y2 < img.shape[0] and 0 <= blue_point_x2 < img.shape[1]:
+                    if binary[blue_point_y2, blue_point_x2] == 0:
+                        cv2.circle(img, (blue_point_x2, blue_point_y2), red_point_radius, (255, 0, 0), -1)
+                count += 1
+
+    # 赤点の描画
+    cv2.circle(img, (red_point_x, cy), red_point_radius, (0, 0, 255), -1)
+
+    # カメラの画像の出力
+    cv2.imshow('video image', img)
+    cv2.imshow('video image2', binary)
+
+
+    # 繰り返し分から抜けるためのif文
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
+
+# メモリを解放して終了するためのコマンド
+cap.release()
+cv2.destroyAllWindows()
+

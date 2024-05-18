@@ -1,15 +1,15 @@
 import cv2
 import numpy as np
-## これは動くぞ
+
 # パーティクルフィルタのパラメータ
 NUM_PARTICLES = 1000
-NOISE_STD = 50
+NOISE_STD = 100
 
 # 初期化
 def initialize_particles(num_particles, img_shape):
     particles = np.empty((num_particles, 2))
     particles[:, 0] = np.random.uniform(0, img_shape[1], size=num_particles)
-    particles[:, 1] = np.random.uniform(0, img_shape[0], size=num_particles)
+    particles[:, 1] = np.random.uniform(img_shape[0] // 2, img_shape[0], size=num_particles)
     return particles
 
 # パーティクルの重みを更新
@@ -21,14 +21,11 @@ def update_weights(particles, frame, line_color=(0, 0, 0), threshold=50):
     for i, particle in enumerate(particles):
         x, y = int(particle[0]), int(particle[1])
         if 0 <= x < frame.shape[1] and 0 <= y < frame.shape[0]:
-            color = frame[y, x]
-            distance = np.linalg.norm(color - line_color)
             if binary_frame[y, x] == 255:
                 weights[i] = 1
             else:
-                weights[i] = np.exp(-distance / threshold)
+                weights[i] = 1e-300
     
-    weights += 1e-300  # avoid zeros
     weights /= np.sum(weights)
     return weights
 
@@ -39,9 +36,11 @@ def resample(particles, weights):
     return particles
 
 # パーティクルの移動
-def move_particles(particles, move_std):
+def move_particles(particles, move_std, frame_shape):
     noise = np.random.normal(0, move_std, particles.shape)
     particles += noise
+    particles[:, 0] = np.clip(particles[:, 0], 0, frame_shape[1] - 1)
+    particles[:, 1] = np.clip(particles[:, 1], 0, frame_shape[0] - 1)
     return particles
 
 # 角度を計算するヘルパー関数
@@ -57,8 +56,7 @@ def detect_t_shape(frame):
     
     for contour in contours:
         approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
-        if (len(approx) >= 6 and len(approx) <=10): 
-            # 角度を計算してT字形状を判定
+        if 6 <= len(approx) <= 10: 
             for i in range(len(approx)):
                 pt1 = approx[i][0]
                 pt2 = approx[(i + 1) % len(approx)][0]
@@ -68,7 +66,7 @@ def detect_t_shape(frame):
                 v2 = pt3 - pt2
                 
                 angle = angle_between(v1, v2)
-                if 85 < abs(angle) < 90:  # ほぼ直角の角度を持つ場合
+                if 85 < abs(angle) < 95:  # ほぼ直角の角度を持つ場合
                     return approx
     
     return None
@@ -84,13 +82,10 @@ def main():
     if not ret:
         print("フレームが取得できません")
         return
-    cap.set(cv2.CAP_PROP_FPS, 30)
-    cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('video image', 85, 60)    
+    
     particles = initialize_particles(NUM_PARTICLES, frame.shape)
     height, width, _ = frame.shape
 
-    frame = frame[height//2:, :]
     red_point_x = width // 2
 
     while True:
@@ -101,29 +96,32 @@ def main():
         t_shape = detect_t_shape(frame)
         weights = update_weights(particles, frame)
         particles = resample(particles, weights)
-        particles = move_particles(particles, NOISE_STD)
+        particles = move_particles(particles, NOISE_STD, frame.shape)
 
         # パーティクルを描画
         for particle in particles:
             cv2.circle(frame, (int(particle[0]), int(particle[1])), 1, (0, 255, 0), -1)
 
-# ten
-        cv2.circle(frame, (red_point_x-300, 500), 30, (0, 255, 0), -1)
+        # 赤い点を描画
+        cv2.circle(frame, (red_point_x, height // 2), 5, (0, 0, 255), -1)
 
         # T字形状を描画
         if t_shape is not None:
             cv2.drawContours(frame, [t_shape], -1, (255, 0, 0), 2)
-#            print("OK")
+            print("T字路を検出しました")
+
         # 重心を計算して描画
         mean_particle = np.mean(particles, axis=0).astype(int)
         cv2.circle(frame, (mean_particle[0], mean_particle[1]), 5, (0, 0, 255), -1)
-## red == green
-        distance = red_point_x - 300 - mean_particle[0]        
-        distance1 = 500  - mean_particle[1]
-        print(distance)
 
-## distance1 =< 100ならｔ字路発見とする
-        
+        # 赤い点とパーティクルの重心の距離を計算
+        distance_x = red_point_x - mean_particle[0]
+        distance_y = (height // 2) - mean_particle[1]
+        print("距離 (x, y):", distance_x, distance_y)
+
+        if abs(distance_y) <= 100:
+            print("T字路を検出しました")
+
         cv2.imshow('video image', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
