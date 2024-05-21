@@ -1,17 +1,17 @@
+import sys
 import matplotlib.pyplot as plt
 
-# テキストファイルから数値データを読み取る関数
-def read_data_from_file(file_path):
+# 標準入力から数値データを読み取る関数
+def read_data_from_stdin():
     data = []
-    with open(file_path, 'r') as file:
-        for line in file:
-            try:
-                # 各行の数値を読み取ってリストに追加
-                number = float(line.strip())
-                data.append(number)
-            except ValueError:
-                # 数値に変換できない場合はスキップ
-                continue
+    for line in sys.stdin:
+        try:
+            # 各行の数値を読み取ってリストに追加
+            number = float(line.strip())
+            data.append(number)
+        except ValueError:
+            # 数値に変換できない場合はスキップ
+            continue
     return data
 
 # 指定された条件に基づいてカウントする関数
@@ -22,11 +22,8 @@ def count_differences_within_threshold(data, threshold=10):
             count += 1
     return count
 
-# データファイルのパス
-file_path = 'test2.txt'
-
-# ファイルからデータを読み取る
-data = read_data_from_file(file_path)
+# 標準入力からデータを読み取る
+data = read_data_from_stdin()
 
 # 指定された条件に基づいてカウントを計算
 count = count_differences_within_threshold(data)
@@ -35,7 +32,7 @@ count = count_differences_within_threshold(data)
 percentage = (count / (len(data) - 1)) * 100 if len(data) > 1 else 0
 
 # 結果を出力
-print(f"数値の差が10以内であった数: {count}")
+print(f"数値の差が10以内であったカウント: {count}")
 print(f"全体のデータの要素数: {len(data)}")
 print(f"全体の中での割合: {percentage:.2f}%")
 
