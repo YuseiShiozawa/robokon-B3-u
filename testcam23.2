@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 動画ファイルのパス
-video_path = 'test.mp4'  # ここに動画ファイルのパスを入力してください
+video_path = 'output.avi'  # ここに動画ファイルのパスを入力してください
 
 # 動画ファイルからキャプチャを作成
 cap = cv2.VideoCapture(video_path)
@@ -105,8 +105,10 @@ while True:
     cv2.imshow('video image2', binary)
 
     # 繰り返し分から抜けるためのif文
-    key = cv2.waitKey(100)
-    if key == 27:
+   # key = cv2.waitKey(1)
+   # if key == 27:
+       # break
+    if cv2.waitKey(1) == 27:  # 27はEscキーのASCIIコード
         break
 
 # メモリを解放して終了するためのコマンド
