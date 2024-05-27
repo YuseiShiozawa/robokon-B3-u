@@ -1,7 +1,7 @@
 import cv2
 
 # 録画されたビデオファイルを開く
-cap = cv2.VideoCapture('output.avi')
+cap = cv2.VideoCapture('autotest3.avi')
 
 if not cap.isOpened():
     print("Error: Could not open video file.")

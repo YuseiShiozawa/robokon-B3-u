@@ -17,7 +17,7 @@ cap.set(cv2.CAP_PROP_AUTO_WB, 0)
 # ビデオの保存設定
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 #out = cv2.VideoWriter('output.avi', fourcc, 30.0, (int(cap.get(3)), int(cap.get(4))))
-out = cv2.VideoWriter('output.avi', fourcc, 30.0, (640, 480))
+out = cv2.VideoWriter('autotest4.avi', fourcc, 30.0, (640, 480))
 # カウントダウンの時間（秒）
 countdown_time = 5
 
