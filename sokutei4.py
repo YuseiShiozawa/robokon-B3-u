@@ -33,7 +33,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 cy = 0
 # ウィンドウの名前設定
 cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
-cv2.namedWindow('Cropped Image', cv2.WINDOW_NORMAL)
+#cv2.namedWindow('Cropped Image', cv2.WINDOW_NORMAL)
 
 # トラックバーのコールバック関数
 def nothing(x):
@@ -41,8 +41,8 @@ def nothing(x):
 
 # トラックバーをウィンドウに作成
 cv2.createTrackbar('Threshold', 'video image', 0, 255, nothing)
-cv2.createTrackbar('crop_x', 'Cropped Image', 0, original_img.shape[1], nothing)
-cv2.createTrackbar('crop_y', 'Cropped Image', 0, original_img.shape[0], nothing)
+#cv2.createTrackbar('crop_x', 'Cropped Image', 0, original_img.shape[1], nothing)
+#cv2.createTrackbar('crop_y', 'Cropped Image', 0, original_img.shape[0], nothing)
 
 while True:
     # 画像をコピーして使用
@@ -57,8 +57,8 @@ while True:
 
     # トラックバーの値を取得
     threshold_value = cv2.getTrackbarPos('Threshold', 'video image')
-    crop_x = cv2.getTrackbarPos('crop_x', 'Cropped Image')
-    crop_y = cv2.getTrackbarPos('crop_y', 'Cropped Image')
+#    crop_x = cv2.getTrackbarPos('crop_x', 'Cropped Image')
+ #   crop_y = cv2.getTrackbarPos('crop_y', 'Cropped Image')
 
     # 二値化
     _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY_INV)
@@ -70,18 +70,27 @@ while True:
     union = np.logical_or(binary, otsu_binary)
     iou = np.sum(intersection) / np.sum(union)
 
+  #  intersection2 = np.logical_and(binary, img)
+   # union2 = np.logical_or(binary, img)
+   # iou2 = np.sum(intersection2) / np.sum(union2)
+
+
+
+
     # 一致率を画面に表示
     cv2.putText(img, f"IOU: {iou}", (10, 120), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+    #cv2.putText(img, f"IOU2: {iou2}", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+ 
     cv2.putText(img, f"sikiti {threshold_value}:", (10, 80), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
     # 画像処理結果の表示
-    cv2.imshow('Binary Image', binary)
+    cv2.imshow('change sikiti Image', binary)
     cv2.imshow('Otsu Binary Image', otsu_binary)
 
     # トリミング
-    crop_x = min(crop_x, width - 100)
-    crop_y = min(crop_y, height - 100)
-    crop_img = img[crop_y:crop_y+100, crop_x:crop_x+300]
-    cv2.imshow('Cropped Image', crop_img)
+#    crop_x = min(crop_x, width - 100)
+ #   crop_y = min(crop_y, height - 100)
+  #  crop_img = img[crop_y:crop_y+100, crop_x:crop_x+300]
+   # cv2.imshow('Cropped Image', crop_img)
 
     # カメラの画像の出力
     cv2.imshow('video image', img)
