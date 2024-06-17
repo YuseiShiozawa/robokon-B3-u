@@ -10,8 +10,9 @@ def main():
     pub = rospy.Publisher('distance', Int32, queue_size=10)
     rate = rospy.Rate(10)  # ループ周波数（10Hz）
 
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(4)
     cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y', 'U', 'Y', 'V'))
     cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('video image', 85, 60)
 

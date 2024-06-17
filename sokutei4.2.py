@@ -23,17 +23,12 @@ if not ret:
     exit()
 
 # 各変数の初期値設定
-red_point_radius = 5  # 点の半径（ピクセル）
-red_point_x = 320  # 赤い点のX座標
-blue_point_x1 = 100  # 左の青点
-blue_point_y1 = 60
-blue_point_x2 = 550  # 右の青点
-blue_point_y2 = 60
 font = cv2.FONT_HERSHEY_SIMPLEX
-cy = 0
+
 # ウィンドウの名前設定
 cv2.namedWindow('video image', cv2.WINDOW_NORMAL)
 cv2.namedWindow('Cropped Image', cv2.WINDOW_NORMAL)
+cv2.namedWindow('change sikiti Image', cv2.WINDOW_NORMAL)
 
 # トラックバーのコールバック関数
 def nothing(x):
@@ -49,9 +44,12 @@ while True:
     img = original_img.copy()
     height, width, _ = img.shape
 
-    img = img[height//2:, :]
-    red_point_x = width // 2
+#    img = cv2.resize(img0, (int(width*0.5), int(height*0.5)))
+#    height, width, _ = img.shape
 
+    # 下半分を使用
+    img = img[height//2:, :]
+    
     # 画像処理：グレースケール変換
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -61,50 +59,59 @@ while True:
     crop_y = cv2.getTrackbarPos('crop_y', 'Cropped Image')
 
     # 二値化
-    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY_INV)
+    _, binary = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
 
     # 大津の二値化
-    _, otsu_binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+#    _, otsu_binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    _, otsu_binary = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)
+    
     # 二値化結果の一致率を計算
-#    intersection = np.logical_and(binary, otsu_binary)
- #   union = np.logical_or(binary, otsu_binary)
-  #  iou = np.sum(intersection) / np.sum(union)
+    intersection = np.logical_and(binary, otsu_binary)
+    union = np.logical_or(binary, otsu_binary)
+    iou = np.sum(intersection) / np.sum(union)
 
   #  intersection2 = np.logical_and(binary, img)
    # union2 = np.logical_or(binary, img)
-   # iou2 = np.sum(intersection2) / np.sum(union2)
-
-    correspond = np.logical_and(binary, otsu_binary)
-    allp = np.logical_or(binary, otsu_binary)
-    acc = np.sum(correspond) / np.sum(allp)
-
-
+   # iou2 = np.sum(intersection) / np.sum(union)
 
 
     # 一致率を画面に表示
-    cv2.putText(img, f"Jaccard: {acc}", (10, 120), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-    #cv2.putText(img, f"IOU2: {iou2}", (10, 40), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
- 
+    cv2.putText(img, f"IOU: {iou:.2f}", (10, 120), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.putText(img, f"sikiti {threshold_value}:", (10, 80), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-    # 画像処理結果の表示
-    cv2.imshow('change sikiti Image', binary)
-    cv2.imshow('Otsu Binary Image', otsu_binary)
+    
 
+   # cv2.putText(img, f"IOU: {iou:.2f}", (10, 120-70), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+ #   cv2.putText(img, f"sikiti {threshold_value}:", (10, 80-70), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+ 
     # トリミング
- #   crop_x = min(crop_x, width - 100)
-  #  crop_y = min(crop_y, height - 100)
-   # crop_img = img[crop_y:crop_y+100, crop_x:crop_x+300]
+    crop_x = min(crop_x, width - 100)
+    crop_y = min(crop_y, height - 100)
+    crop_img = img[crop_y:crop_y+30, crop_x:crop_x+300]
 
-   # 格子を描画
-#    for i in range(0, 300, 2):  # 2ピクセルごとに
-        # 横線
- #      cv2.line(crop_img, (0, i), (300, i), (255, 255, 255), 1)
-        # 縦線
-  #     cv2.line(crop_img, (i, 0), (i, 300), (255, 255, 255), 1)
+    # トリミングされた範囲に枠を描画
+    cv2.rectangle(img, (crop_x, crop_y), (crop_x + 300, crop_y + 30), (0, 255, 0), 2)
 
-#    cv2.imshow('Cropped Image', crop_img)
+    # トリミングされた画像を表示
+    cv2.imshow('Cropped Image', crop_img)
 
-    # カメラの画像の出力
+    # change sikiti Imageも同じ範囲でトリミング
+    cropped_binary = binary[crop_y:crop_y+1, crop_x:crop_x+300]
+
+    # 二値化されたピクセル数をカウント
+    white_pixel_count = np.sum(cropped_binary == 255)
+    
+    # ピクセル数を表示
+#    cv2.putText(cropped_binary, f"White Pixels: {white_pixel_count}", (10, 50), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    print(white_pixel_count)
+    
+    cv2.imshow('change sikiti Image', binary)
+
+
+    # トリミングされた二値化画像を表示
+    cv2.imshow('change sikiti Image2', cropped_binary)
+
+    # 画像処理結果の表示
+    cv2.imshow('Otsu Binary Image', otsu_binary)
     cv2.imshow('video image', img)
 
     # 繰り返し分から抜けるためのif文
